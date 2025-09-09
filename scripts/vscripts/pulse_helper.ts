@@ -86,7 +86,7 @@ Instance.PublicMethod("ResolveID", (str: string) => {
 let listener_queue: Array<string> = [];
 const listenerMap = new Map<string, { callback: (activator: Ent) => void }>();
 Instance.PublicMethod("SetActivator", (str: string) => {
-	Instance.Msg("SetActivator:" + str);
+	//Instance.Msg("SetActivator:" + str);
 	let listener = listener_queue.shift();
 	if (listener !== undefined) {
 		const entry = listenerMap.get(listener);
@@ -94,7 +94,7 @@ Instance.PublicMethod("SetActivator", (str: string) => {
 	}
 });
 Instance.PublicMethod("QueueCallback", (str: string) => {
-	Instance.Msg("QueueCallback: " + str);
+	//Instance.Msg("QueueCallback: " + str);
 	listener_queue.push(str);
 });
 
