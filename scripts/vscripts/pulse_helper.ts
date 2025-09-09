@@ -99,7 +99,7 @@ Instance.PublicMethod("QueueCallback", (str: string) => {
 });
 
 let listener_id = 0;
-export function ListenerForOutput(
+export function ListenForOutput(
 	entName: string,
 	output: string,
 	callback: (activator: Ent) => void
