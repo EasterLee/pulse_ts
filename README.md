@@ -1,6 +1,6 @@
 # pulse_ts
 
-Helper library that allow source_ts to communicate with pulse.
+***Experimental*** helper library that allow source_ts to communicate with pulse.
 
 
 ## You will need these to compile pulse and source_ts
