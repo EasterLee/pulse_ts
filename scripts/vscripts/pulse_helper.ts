@@ -82,10 +82,10 @@ Instance.PublicMethod("ResolveID", (str: string) => {
 	}
 });
 
-type ListenrCallback = (self: Ent, activator: Ent) => void;
+type ListenerCallback = (self: Ent, activator: Ent) => void;
 
 let listener_queue: Array<string> = [];
-const listenerMap = new Map<string, { self: Ent; callback: ListenrCallback }>();
+const listenerMap = new Map<string, { self: Ent; callback: ListenerCallback }>();
 Instance.PublicMethod("SetActivator", (str: string) => {
 	//Instance.Msg("SetActivator:" + str);
 	let listener = listener_queue.shift();
@@ -100,7 +100,7 @@ Instance.PublicMethod("QueueCallback", (str: string) => {
 });
 
 let listener_id = 0;
-export async function ListenForOutput(ent: Ent, output: string, callback: ListenrCallback): Promise<void> {
+export async function ListenForOutput(ent: Ent, output: string, callback: ListenerCallback): Promise<void> {
 	let id = (listener_id++).toString();
 	listenerMap.set(id, { self: ent, callback: callback });
 	await AddOutputByHandle(ent, output + ">pulssy_trigger>trigger>>0>-1");
@@ -124,7 +124,6 @@ function SetParam(p: (string | number | Vector3)[]): void {
 	});
 }
 
-export const NULL_ENT: Ent = "-1" as Ent;
 export type Ent = string & { readonly __brand: unique symbol };
 
 export async function DebugLog(str: string): Promise<void> {
@@ -134,11 +133,12 @@ export async function DebugLog(str: string): Promise<void> {
 	return promise;
 }
 
-export async function FindEntityByName(name: string): Promise<Ent> {
+export async function FindEntityByName(name: string): Promise<Ent | undefined> {
 	let [promise, id] = createDeferred<Array<string>>();
 	Instance.EntFireBroadcast("pulse", "str1", name, 0);
 	Instance.EntFireBroadcast("pulse", "FindEntityByName", id, 0);
-	return (await promise)[0] as Ent;
+	let s = (await promise)[0];
+	return s == "-1" ? undefined : s as Ent;
 }
 
 export async function GetName(ent: Ent): Promise<string> {
@@ -306,4 +306,60 @@ export async function AddOutputByHandle(ent: Ent, param: string): Promise<void> 
 	SetParam(Array.from(arguments));
 	Instance.EntFireBroadcast("pulse", "AddOutputByHandle", id, 0);
 	return promise;
+}
+
+export async function DoesEntityHaveLOS(ent: Ent, entTarget: Ent): Promise<boolean> {
+	let [promise, id] = createDeferred<Array<string>>();
+	SetParam(Array.from(arguments));
+	Instance.EntFireBroadcast("pulse", "DoesEntityHaveLOS", id, 0);
+	return Boolean((await promise)[0]);
+}
+
+export async function GetEntityFacingYawAngleDelta(ent: Ent, entTarget: Ent): Promise<number> {
+	let [promise, id] = createDeferred<Array<string>>();
+	SetParam(Array.from(arguments));
+	Instance.EntFireBroadcast("pulse", "GetEntityFacingYawAngleDelta", id, 0);
+	return Number((await promise)[0]);
+}
+
+export async function CanCharacterSeeEntity(entChar: Ent, entTarget: Ent): Promise<boolean> {
+	let [promise, id] = createDeferred<Array<string>>();
+	SetParam(Array.from(arguments));
+	Instance.EntFireBroadcast("pulse", "GetEntityFacingYawAngleDelta", id, 0);
+	return Boolean((await promise)[0]);
+}
+
+export async function GetEntityHeightAboveNavMesh(ent: Ent): Promise<number> {
+	let [promise, id] = createDeferred<Array<string>>();
+	Instance.EntFireBroadcast("pulse", "str1", ent, 0);
+	Instance.EntFireBroadcast("pulse", "GetEntityHeightAboveNavMesh", id, 0);
+	return Number((await promise)[0]);
+}
+
+export async function ConCommand(command: string): Promise<void> {
+	let [promise, id] = createDeferred<Array<string>>();
+	Instance.EntFireBroadcast("pulse", "str1", command, 0);
+	Instance.EntFireBroadcast("pulse", "ConCommand", id, 0);
+	return;
+}
+
+export async function GetEntityNavMeshPosition(ent: Ent): Promise<Vector3> {
+	let [promise, id] = createDeferred<Array<string>>();
+	Instance.EntFireBroadcast("pulse", "str1", ent, 0);
+	Instance.EntFireBroadcast("pulse", "GetEntityNavMeshPosition", id, 0);
+	return Vector3.fromString((await promise)[0]);
+}
+
+export async function GetEntityHeightAboveWorldCollision(ent: Ent): Promise<number> {
+	let [promise, id] = createDeferred<Array<string>>();
+	Instance.EntFireBroadcast("pulse", "str1", ent, 0);
+	Instance.EntFireBroadcast("pulse", "GetEntityHeightAboveWorldCollision", id, 0);
+	return Number((await promise)[0]);
+}
+
+export async function GetMatchInfo(): Promise<{CTScore: number, TScore: number, ScoreToEndMatch: number, RoundsPlayedThisPhase: number}> {
+	let [promise, id] = createDeferred<Array<string>>();
+	Instance.EntFireBroadcast("pulse", "GetMatchInfo", id, 0);
+	let s = await promise
+	return ;
 }

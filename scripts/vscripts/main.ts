@@ -6,12 +6,14 @@ Instance.PublicMethod("test", async () => {
 	Instance.Msg("Start DebugLog");
 	await Pulse.DebugLog("Hello from Pulse");
 	let ent = await Pulse.FindEntityByName("ts");
-	Instance.Msg(await Pulse.GetName(ent));
-	Instance.Msg(await Pulse.GetClassname(ent));
-	await Pulse.SetOrigin(ent, new Vector3(1, 2, 3));
-	Instance.Msg(await Pulse.GetAbsOrigin(ent));
-	await Pulse.SetOrigin(ent, new Vector3(123, 456, 789));
-	Instance.Msg(await Pulse.GetAbsOrigin(ent));
+	if (ent) {
+		Instance.Msg(await Pulse.GetName(ent));
+		Instance.Msg(await Pulse.GetClassname(ent));
+		await Pulse.SetOrigin(ent, new Vector3(1, 2, 3));
+		Instance.Msg(await Pulse.GetAbsOrigin(ent));
+		await Pulse.SetOrigin(ent, new Vector3(123, 456, 789));
+		Instance.Msg(await Pulse.GetAbsOrigin(ent));
+	}
 	Instance.Msg("End DebugLog");
 
 	// example usages for output listener
