@@ -1,3 +1,6 @@
+// Report bugs and suggestion to easterlee
+// https://discord.gg/hKzm6XfuYQ
+
 import { Instance } from "cspointscript";
 
 export class Vector3 {
@@ -44,7 +47,7 @@ export class Vector3 {
 		return this.sub(v).length();
 	}
 	toString(): string {
-		return `(${this.z}, ${this.y}, ${this.z})`;
+		return `(${this.x}, ${this.y}, ${this.z})`;
 	}
 }
 
@@ -82,16 +85,20 @@ Instance.PublicMethod("ResolveID", (str: string) => {
 	}
 });
 
+type Listener = { self: Ent; once: boolean; callback: ListenerCallback };
 type ListenerCallback = (self: Ent, activator: Ent) => void;
 
 let listener_queue: Array<string> = [];
-const listenerMap = new Map<string, { self: Ent; callback: ListenerCallback }>();
+const listenerMap = new Map<string, Listener>();
 Instance.PublicMethod("SetActivator", (str: string) => {
 	//Instance.Msg("SetActivator:" + str);
-	let listener = listener_queue.shift();
-	if (listener !== undefined) {
-		const entry = listenerMap.get(listener);
-		entry?.callback(entry.self, str as Ent);
+	let key = listener_queue.shift();
+	if (key !== undefined) {
+		const listener = listenerMap.get(key);
+		listener?.callback(listener.self, str as Ent);
+		if (listener?.once) {
+			listenerMap.delete(key);
+		}
 	}
 });
 Instance.PublicMethod("QueueCallback", (str: string) => {
@@ -99,12 +106,30 @@ Instance.PublicMethod("QueueCallback", (str: string) => {
 	listener_queue.push(str);
 });
 
-let listener_id = 0;
-export async function ListenForOutput(ent: Ent, output: string, callback: ListenerCallback): Promise<void> {
-	let id = (listener_id++).toString();
-	listenerMap.set(id, { self: ent, callback: callback });
-	await AddOutputByHandle(ent, output + ">pulssy_trigger>trigger>>0>-1");
-	await AddOutputByHandle(ent, output + ">ts>QueueCallback>" + id + ">0>-1");
+Instance.PublicMethod("OnRoundStart", (str: string) => {
+	OnRoundStart_fn(Number(str));
+});
+
+let OnRoundStart_fn: (nRoundNumber: number) => void = () => {};
+export function OnRoundStart(fn: (nRoundNumber: number) => void) {
+	OnRoundStart_fn = fn;
+}
+
+function str2Bool(str: string): boolean {
+	return str === "true";
+}
+
+let listener_key = 0;
+
+/**
+ * Uses OnUser4
+ */
+export async function ListenForOutput(ent: Ent, output: string, once: boolean, callback: ListenerCallback): Promise<void> {
+	let key = (listener_key++).toString();
+	listenerMap.set(key, { self: ent, once: once, callback: callback });
+	let onlyOnce = once ? "1" : "-1";
+	await AddOutputByHandle(ent, output + ">pulssy_trigger>trigger>>0>" + onlyOnce);
+	await AddOutputByHandle(ent, output + ">ts>QueueCallback>" + key + ">0>" + onlyOnce);
 }
 
 function SetParam(p: (string | number | Vector3)[]): void {
@@ -133,12 +158,93 @@ export async function DebugLog(str: string): Promise<void> {
 	return promise;
 }
 
+export async function DebugWorldText(
+	pMessage: string,
+	hEntity: Ent,
+	nTextOffset: number,
+	flDuration: number,
+	flVerticalOffset: number,
+	color: Vector3,
+	flAlpha: number,
+	flScale: number
+): Promise<void> {
+	let [promise, id] = createDeferred<Array<string>>();
+	SetParam(Array.from(arguments));
+	Instance.EntFireBroadcast("pulse", "DebugWorldText", id, 0);
+	let s: Array<number> = (await promise).map((v: string) => Number(v));
+	return promise;
+}
+
+export async function DebugScreenText(
+	pMessage: string,
+	flScreenX: number,
+	flScreenY: number,
+	nTextOffset: number,
+	flDuration: number,
+	color: Vector3,
+	flAlpha: number
+): Promise<void> {
+	let [promise, id] = createDeferred<Array<string>>();
+	SetParam(Array.from(arguments));
+	Instance.EntFireBroadcast("pulse", "DebugScreenText", id, 0);
+	let s: Array<number> = (await promise).map((v: string) => Number(v));
+	return promise;
+}
+
+export async function DebugWorldSphere(vPos: Vector3, flRadius: number, flDuration: number, color: Vector3, flAlpha: number): Promise<void> {
+	let [promise, id] = createDeferred<Array<string>>();
+	SetParam(Array.from(arguments));
+	Instance.EntFireBroadcast("pulse", "DebugWorldSphere", id, 0);
+	let s: Array<number> = (await promise).map((v: string) => Number(v));
+	return promise;
+}
+
+export async function DebugWorldEntityAxis(hEntity: string, flAxisLength: number, flDuration: number): Promise<void> {
+	let [promise, id] = createDeferred<Array<string>>();
+	SetParam(Array.from(arguments));
+	Instance.EntFireBroadcast("pulse", "DebugWorldEntityAxis", id, 0);
+	let s: Array<number> = (await promise).map((v: string) => Number(v));
+	return promise;
+}
+
+export async function DebugWorldAxis(vPos: string, flAxisLength: number, flDuration: number): Promise<void> {
+	let [promise, id] = createDeferred<Array<string>>();
+	SetParam(Array.from(arguments));
+	Instance.EntFireBroadcast("pulse", "DebugWorldAxis", id, 0);
+	let s: Array<number> = (await promise).map((v: string) => Number(v));
+	return promise;
+}
+
+export async function DebugWorldCross(vPos: Vector3, flRadius: number, flDuration: number, color: Vector3, flAlpha: number): Promise<void> {
+	let [promise, id] = createDeferred<Array<string>>();
+	SetParam(Array.from(arguments));
+	Instance.EntFireBroadcast("pulse", "DebugWorldCross", id, 0);
+	let s: Array<number> = (await promise).map((v: string) => Number(v));
+	return promise;
+}
+
+export async function DebugWorldLine(vStartPos: Vector3, vEndPos: Vector3, flDuration: number, color: Vector3, flAlpha: number): Promise<void> {
+	let [promise, id] = createDeferred<Array<string>>();
+	SetParam(Array.from(arguments));
+	Instance.EntFireBroadcast("pulse", "DebugWorldLine", id, 0);
+	let s: Array<number> = (await promise).map((v: string) => Number(v));
+	return promise;
+}
+
+export async function DebugWorldArrow(vStartPos: Vector3, vEndPos: Vector3, flDuration: number, color: Vector3, flWidth: number, flAlpha: number): Promise<void> {
+	let [promise, id] = createDeferred<Array<string>>();
+	SetParam(Array.from(arguments));
+	Instance.EntFireBroadcast("pulse", "DebugWorldArrow", id, 0);
+	let s: Array<number> = (await promise).map((v: string) => Number(v));
+	return promise;
+}
+
 export async function FindEntityByName(name: string): Promise<Ent | undefined> {
 	let [promise, id] = createDeferred<Array<string>>();
 	Instance.EntFireBroadcast("pulse", "str1", name, 0);
 	Instance.EntFireBroadcast("pulse", "FindEntityByName", id, 0);
 	let s = (await promise)[0];
-	return s == "-1" ? undefined : s as Ent;
+	return s == "-1" ? undefined : (s as Ent);
 }
 
 export async function GetName(ent: Ent): Promise<string> {
@@ -189,12 +295,21 @@ export async function DealDamage(entTarget: Ent, entAttacker: Ent, dmg: number, 
 	Instance.EntFireBroadcast("pulse", "DealDamage", id, 0);
 	return promise;
 }
-
+/**
+ *
+ * @param vStartPos
+ * @param vDirection
+ * @param fMaxLength
+ * @param hIgnoreEntity
+ * @param nTraceContents 0: Static Level, 1: Solid
+ * @returns
+ */
 export async function GetTraceHit(
 	vStartPos: Vector3,
 	vDirection: Vector3,
 	fMaxLength: number,
-	hIgnoreEntity: Ent
+	hIgnoreEntity: Ent,
+	nTraceContents: number
 ): Promise<{
 	didHit: boolean;
 	distance: number;
@@ -204,12 +319,13 @@ export async function GetTraceHit(
 	entity: Ent;
 }> {
 	let [promise, id] = createDeferred<void>();
+	nTraceContents = Math.min(Math.max(nTraceContents, 0), 1);
 	SetParam(Array.from(arguments));
 	Instance.EntFireBroadcast("pulse", "GetTraceHit", id, 0);
 	let results = await promise;
 	//Instance.Msg(results);
 	return {
-		didHit: Boolean(results[0]),
+		didHit: str2Bool(results[0]),
 		distance: Number(results[1]),
 		location: Vector3.fromString(results[2]),
 		normal: Vector3.fromString(results[3]),
@@ -265,7 +381,7 @@ export async function AreEntitiesInHierarchy(ent1: Ent, ent2: Ent): Promise<bool
 	let [promise, id] = createDeferred<Array<string>>();
 	SetParam(Array.from(arguments));
 	Instance.EntFireBroadcast("pulse", "AreEntitiesInHierarchy", id, 0);
-	return promise;
+	return str2Bool((await promise)[0]);
 }
 
 export async function GetTeamNumber(ent: Ent): Promise<number> {
@@ -288,8 +404,9 @@ export async function FindAllEntitiesWithinRadius(entityType: string, searchEnt:
 	Instance.EntFireBroadcast("pulse", "FindAllEntitiesWithinRadius", id, 0);
 	return (await promise) as Array<Ent>;
 }
-
-// Do make sure that the entity doesn't have output on OnUser4
+/**
+ * Uses OnUser4
+ */
 export async function EntFireByHandle(ent: Ent, input: string, param: string): Promise<void> {
 	if (input.toLowerCase() == "addoutput") {
 		return await AddOutputByHandle(ent, param);
@@ -300,7 +417,9 @@ export async function EntFireByHandle(ent: Ent, input: string, param: string): P
 	return promise;
 }
 
-//EntFire where input is addoutput
+/**
+ * EntFire where input is addoutput
+ */
 export async function AddOutputByHandle(ent: Ent, param: string): Promise<void> {
 	let [promise, id] = createDeferred<Array<string>>();
 	SetParam(Array.from(arguments));
@@ -308,11 +427,35 @@ export async function AddOutputByHandle(ent: Ent, param: string): Promise<void> 
 	return promise;
 }
 
+export async function EntFireAsPlayer(entName: string, input: string, param: string, activator: Ent): Promise<void> {
+	let [promise, id] = createDeferred<Array<string>>();
+	await EntFireByHandle(activator, "AddContext", "pulssy:1");
+	Instance.EntFireBroadcast("pulssy_filter", "AddOutput", `OnPass>ts>ResolveID>${id}>0>1`, 0);
+	Instance.EntFireBroadcast("pulssy_filter", "AddOutput", "OnPass>!activator>RemoveContext>pulssy>0>1", 0);
+	Instance.EntFireBroadcast("pulssy_filter", "AddOutput", `OnPass>${entName}>${input}>${param}>0>1`, 0);
+	Instance.EntFireBroadcast("pulssy_zone", "CountPlayersInZone", "", 0);
+	return promise;
+}
+/**
+ * Spawn a point_orient that follow the player's look direction
+ *
+ * Becomes active after one tick
+ */
+export async function MakeEye(entPlayer: Ent): Promise<Ent | undefined> {
+	let template = await FindEntityByName("pulssy_eyeangle_temp");
+	if (!template) {
+		return undefined;
+	}
+	let eye = (await PointTemplate_ForceSpawn(template, template))[0];
+	EntFireAsPlayer(await GetName(eye), "SetTarget", "!activator", entPlayer);
+	return eye;
+}
+
 export async function DoesEntityHaveLOS(ent: Ent, entTarget: Ent): Promise<boolean> {
 	let [promise, id] = createDeferred<Array<string>>();
 	SetParam(Array.from(arguments));
 	Instance.EntFireBroadcast("pulse", "DoesEntityHaveLOS", id, 0);
-	return Boolean((await promise)[0]);
+	return str2Bool((await promise)[0]);
 }
 
 export async function GetEntityFacingYawAngleDelta(ent: Ent, entTarget: Ent): Promise<number> {
@@ -326,7 +469,7 @@ export async function CanCharacterSeeEntity(entChar: Ent, entTarget: Ent): Promi
 	let [promise, id] = createDeferred<Array<string>>();
 	SetParam(Array.from(arguments));
 	Instance.EntFireBroadcast("pulse", "GetEntityFacingYawAngleDelta", id, 0);
-	return Boolean((await promise)[0]);
+	return str2Bool((await promise)[0]);
 }
 
 export async function GetEntityHeightAboveNavMesh(ent: Ent): Promise<number> {
@@ -357,9 +500,9 @@ export async function GetEntityHeightAboveWorldCollision(ent: Ent): Promise<numb
 	return Number((await promise)[0]);
 }
 
-export async function GetMatchInfo(): Promise<{CTScore: number, TScore: number, ScoreToEndMatch: number, RoundsPlayedThisPhase: number}> {
+export async function GetMatchInfo(): Promise<{ RoundsPlayedThisPhase: number; CTScore: number; TScore: number; ScoreToEndMatch: number }> {
 	let [promise, id] = createDeferred<Array<string>>();
 	Instance.EntFireBroadcast("pulse", "GetMatchInfo", id, 0);
-	let s = await promise
-	return ;
+	let s: Array<number> = (await promise).map((v: string) => Number(v));
+	return { RoundsPlayedThisPhase: s[0], CTScore: s[1], TScore: s[2], ScoreToEndMatch: s[3] };
 }
