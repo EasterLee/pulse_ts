@@ -10,4 +10,4 @@
 [Unofficial Source_TS compiler](https://github.com/Peterclark1996/s2ts) 
 
 ## Examples
-Check main.ts. Required entities are in pulse_ts.vmap.
+Check main.ts. Required entities and example usages are in pulse_ts.vmap.
